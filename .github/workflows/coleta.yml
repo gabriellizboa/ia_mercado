@@ -1,0 +1,41 @@
+name: coleta
+on:
+  schedule:
+    - cron: "*/15 * * * 1-5"
+  workflow_dispatch:
+    inputs:
+      resumo:
+        description: "Forçar envio do resumo agora (use no primeiro teste)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: coleta
+  cancel-in-progress: false
+
+jobs:
+  rodar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Rodar robô
+        run: python coletar.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FORCAR_RESUMO: ${{ inputs.resumo }}
+      - name: Salvar estado e operações simuladas
+        if: always()
+        run: |
+          git config user.name "robo-mercado"
+          git config user.email "robo-mercado@users.noreply.github.com"
+          git add -A estado 2>/dev/null || true
+          git diff --staged --quiet || (git commit -m "estado $(date -u +%F_%H:%M)" && git pull --rebase --autostash && git push)
