@@ -477,4 +477,10 @@ def executar(agora, forcar_resumo=False, baixar_fn=baixar, enviar_fn=telegram,
     return 1 if len(falhas_agora) == len(ATIVOS) else 0
 
 
-def m
+def main():
+    forcar = os.environ.get("FORCAR_RESUMO", "").strip().lower() == "true"
+    return executar(datetime.now(timezone.utc), forcar_resumo=forcar)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
